@@ -1,6 +1,6 @@
 {
   "name": "@veap/kernel",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Core dependency injection container, event bus, and application lifecycle for Veap",
   "bugs": "https://github.com/veapjs/veap-kernel/issues",
   "repository": {
@@ -19,6 +19,30 @@
     "./events": {
       "types": "./dist/events/index.d.ts",
       "default": "./dist/events/index.js"
+    },
+    "./ioc": {
+      "types": "./dist/ioc/index.d.ts",
+      "default": "./dist/ioc/index.js"
+    },
+    "./errors": {
+      "types": "./dist/errors/index.d.ts",
+      "default": "./dist/errors/index.js"
+    },
+    "./logging": {
+      "types": "./dist/logging/index.d.ts",
+      "default": "./dist/logging/index.js"
+    },
+    "./http": {
+      "types": "./dist/http/index.d.ts",
+      "default": "./dist/http/index.js"
+    },
+    "./cache": {
+      "types": "./dist/cache/index.d.ts",
+      "default": "./dist/cache/index.js"
+    },
+    "./config": {
+      "types": "./dist/config/index.d.ts",
+      "default": "./dist/config/index.js"
     },
     "./server": {
       "types": "./dist/server.d.ts",

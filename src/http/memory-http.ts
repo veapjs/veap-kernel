@@ -1,10 +1,10 @@
-import { AppError } from "../errors/app-error";
-import { Injectable } from "../ioc/decorators";
+import { AppError } from "../errors/app-error.js";
+import { Injectable } from "../ioc/decorators.js";
 import type {
   CookieOptions,
   ICookieStore,
   IHttpRequestContext,
-} from "./contracts";
+} from "./contracts.js";
 
 @Injectable()
 export class MemoryCookieStore implements ICookieStore {

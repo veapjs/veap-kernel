@@ -33,7 +33,6 @@ describe("ConfigLoader & VeapConfigProvider", () => {
   it("returns default config when no veap.config file exists", async () => {
     const config = await getVeapConfig();
     expect(config).toEqual(DEFAULT_CONFIG);
-    expect(config.privatePath).toBe("/app");
   });
 
   it("loads veap.config.ts using jiti and merges with defaults", async () => {

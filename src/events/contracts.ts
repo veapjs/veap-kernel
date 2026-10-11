@@ -1,4 +1,4 @@
-import type { Token } from "../ioc/tokens";
+import type { Token } from "../ioc/tokens.js";
 
 export interface SystemEventsMap {
   [key: string]: any;
@@ -20,11 +20,15 @@ export interface PublishOptions {
 }
 
 export interface IEventBus {
+  /**
+   * Subscribes a handler to an event type.
+   * Returns an unsubscribe function for convenient cleanup.
+   */
   subscribe<K extends keyof SystemEventsMap>(
     eventType: K | (string & {}),
     subscriberId: string,
     handler: EventHandler<SystemEventsMap[K]>,
-  ): void;
+  ): () => void;
 
   unsubscribe(eventType: string, subscriberId: string): void;
 
@@ -42,6 +46,16 @@ export interface IEventBus {
     payload: SystemEventsMap[K],
     source?: string,
   ): Promise<void>;
+
+  /**
+   * Subscribes a one-time handler that automatically unsubscribes after being invoked once.
+   * Returns an unsubscribe function.
+   */
+  once<K extends keyof SystemEventsMap>(
+    eventType: K | (string & {}),
+    handler: EventHandler<SystemEventsMap[K]>,
+    subscriberIdPrefix?: string,
+  ): () => void;
 }
 
 export const EVENT_BUS: Token<IEventBus> = Symbol.for("veap:kernel:event-bus");

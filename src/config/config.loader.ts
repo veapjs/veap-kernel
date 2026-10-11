@@ -1,9 +1,9 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: <ignore> */
 import fs from "node:fs";
 import path from "node:path";
-import { AppError } from "../errors/app-error";
-import { warn } from "../logging/console-logger";
-import { DEFAULT_CONFIG, type VeapConfig } from "./contracts";
+import { AppError } from "../errors/app-error.js";
+import { warn } from "../logging/console-logger.js";
+import { DEFAULT_CONFIG, type VeapConfig } from "./contracts.js";
 
 let cachedConfig: VeapConfig | null = null;
 
@@ -25,8 +25,9 @@ export async function getVeapConfig(): Promise<VeapConfig> {
 
   const cwd = process.cwd();
   const configPathTS = path.join(cwd, "veap.config.ts");
-  const configPathJS = path.join(cwd, "veap.config");
   const configPathMJS = path.join(cwd, "veap.config.mjs");
+  const configPathJS = path.join(cwd, "veap.config.js");
+  const configPathFallback = path.join(cwd, "veap.config");
 
   let loadedConfig: Partial<VeapConfig> = {};
 
@@ -52,6 +53,11 @@ export async function getVeapConfig(): Promise<VeapConfig> {
       loadedConfig = imported.default || imported;
     } else if (fs.existsSync(configPathJS)) {
       const imported: any = await jiti.import(configPathJS, { default: true });
+      loadedConfig = imported.default || imported;
+    } else if (fs.existsSync(configPathFallback)) {
+      const imported: any = await jiti.import(configPathFallback, {
+        default: true,
+      });
       loadedConfig = imported.default || imported;
     }
   } catch (error) {

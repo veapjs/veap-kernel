@@ -1,5 +1,5 @@
-import { Injectable } from "../ioc/decorators";
-import type { IConfigService } from "./contracts";
+import { Injectable } from "../ioc/decorators.js";
+import type { IConfigService } from "./contracts.js";
 
 @Injectable()
 export class ConfigService implements IConfigService {

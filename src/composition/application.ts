@@ -1,8 +1,7 @@
-import { eventBus } from "../events/event-bus";
-import { container } from "../ioc/container";
-import { ServiceProvider } from "../ioc/service-provider";
-import { APP_MIGRATIONS, APP_PLUGINS } from "../ioc/tokens";
-import { logger } from "../logging/console-logger";
+import { eventBus } from "../events/event-bus.js";
+import { container } from "../ioc/container.js";
+import { ServiceProvider } from "../ioc/service-provider.js";
+import { logger } from "../logging/console-logger.js";
 
 export type ProviderEntry =
   | (new (
@@ -12,19 +11,7 @@ export type ProviderEntry =
   | ServiceProvider;
 
 export class ApplicationBuilder {
-  protected migrations: any[] = [];
-  protected plugins: any[] = [];
   protected customProviders: ProviderEntry[] = [];
-
-  public withMigrations(migrations: any[]): this {
-    this.migrations = migrations;
-    return this;
-  }
-
-  public withPlugins(plugins: any[]): this {
-    this.plugins = plugins;
-    return this;
-  }
 
   /**
    * Register a custom ServiceProvider.
@@ -47,16 +34,12 @@ export class ApplicationBuilder {
   }
 
   public create(): Application {
-    return new Application(this.migrations, this.plugins, this.customProviders);
+    return new Application(this.customProviders);
   }
 }
 
 export class Application {
-  constructor(
-    private readonly migrations: any[],
-    private readonly plugins: any[],
-    private readonly providerEntries: ProviderEntry[],
-  ) {}
+  constructor(private readonly providerEntries: ProviderEntry[]) {}
 
   public static configure(): ApplicationBuilder {
     return new ApplicationBuilder();
@@ -86,37 +69,41 @@ export class Application {
       try {
         logger.info("veap:bootstrap", "Starting system initialization...");
 
-        if (this.migrations.length) {
-          container.register({
-            token: APP_MIGRATIONS,
-            useValue: this.migrations,
-          });
-          container.register({
-            token: "AppMigrations",
-            useValue: this.migrations,
-          });
-        }
-        if (this.plugins.length) {
-          container.register({ token: APP_PLUGINS, useValue: this.plugins });
-          container.register({ token: "AppPlugins", useValue: this.plugins });
-        }
-
         const { KernelServiceProvider } = await import(
-          "../providers/kernel.provider"
+          "../providers/kernel.provider.js"
         );
         const entries = [KernelServiceProvider, ...this.providerEntries];
         const providers: ServiceProvider[] = [];
+        const seenConstructors = new Set<any>();
 
         for (const entry of entries) {
+          let providerInstance: ServiceProvider | null = null;
+          let constructorRef: any = null;
+
           if (entry instanceof ServiceProvider) {
-            providers.push(entry);
+            providerInstance = entry;
+            constructorRef = entry.constructor;
           } else if (
             typeof entry === "function" &&
             entry.prototype instanceof ServiceProvider
           ) {
-            providers.push(new (entry as any)(container));
+            constructorRef = entry;
+            providerInstance = new (entry as any)(container);
           } else if (typeof entry === "function") {
-            providers.push((entry as any)(container));
+            providerInstance = (entry as any)(container);
+            if (providerInstance) {
+              constructorRef = providerInstance.constructor;
+            }
+          }
+
+          if (providerInstance) {
+            if (constructorRef && seenConstructors.has(constructorRef)) {
+              continue;
+            }
+            if (constructorRef) {
+              seenConstructors.add(constructorRef);
+            }
+            providers.push(providerInstance);
           }
         }
 
@@ -130,28 +117,71 @@ export class Application {
           }
         }
 
-        await eventBus.publish("system:start", { runtime: "nodejs" });
+        g.__VEAP_BOOTSTRAPPED__ = true;
+        g.__VEAP_BOOTSTRAPPING_PROMISE__ = null;
+        g.__VEAP_ACTIVE_PROVIDERS__ = providers;
 
         logger.info("veap:bootstrap", "System initialized successfully.");
-        g.__VEAP_BOOTSTRAPPED__ = true;
+        await eventBus.publish("system:ready", {});
       } catch (error: any) {
+        g.__VEAP_BOOTSTRAPPED__ = undefined;
+        g.__VEAP_BOOTSTRAPPING_PROMISE__ = null;
+
         if (
-          error?.digest?.startsWith("NEXT_REDIRECT") ||
+          error?.message === "NEXT_REDIRECT" ||
+          error?.digest?.startsWith("NEXT_REDIRECT")
+        ) {
+          throw error;
+        }
+        if (
+          error?.message === "NEXT_NOT_FOUND" ||
           error?.digest?.startsWith("NEXT_NOT_FOUND")
         ) {
           throw error;
         }
+
         logger.error(
           "veap:bootstrap",
           "Critical error during system initialization:",
           error,
         );
         throw error;
-      } finally {
-        g.__VEAP_BOOTSTRAPPING_PROMISE__ = null;
       }
     })();
 
     return g.__VEAP_BOOTSTRAPPING_PROMISE__;
+  }
+
+  public async shutdown(): Promise<void> {
+    const g = globalThis as any;
+    const providers: ServiceProvider[] = g.__VEAP_ACTIVE_PROVIDERS__ || [];
+
+    for (let i = providers.length - 1; i >= 0; i--) {
+      const provider = providers[i];
+      if (typeof provider.shutdown === "function") {
+        try {
+          await provider.shutdown();
+        } catch (err: any) {
+          logger.warn(
+            "veap:shutdown",
+            `Error shutting down provider ${provider.constructor?.name}:`,
+            err?.message || err,
+          );
+        }
+      }
+    }
+
+    try {
+      await eventBus.publish("system:stop", {});
+    } catch {}
+
+    delete g.__VEAP_BOOTSTRAPPED__;
+    delete g.__VEAP_BOOTSTRAPPING_PROMISE__;
+    g.__VEAP_ACTIVE_PROVIDERS__ = [];
+  }
+
+  public static async shutdown(): Promise<void> {
+    const app = new Application([]);
+    await app.shutdown();
   }
 }

@@ -1,5 +1,5 @@
-import { getVeapConfig } from "./config.loader";
-import type { IVeapConfigProvider, VeapConfig } from "./contracts";
+import { getVeapConfig } from "./config.loader.js";
+import type { IVeapConfigProvider, VeapConfig } from "./contracts.js";
 
 /**
  * `IVeapConfigProvider` adapter backed by the jiti-based `veap.config.ts` loader.

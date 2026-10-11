@@ -1,4 +1,4 @@
-import type { ErrorCode, IAppError } from "./types";
+import type { ErrorCode, IAppError } from "./types.js";
 
 /**
  * Domain error.

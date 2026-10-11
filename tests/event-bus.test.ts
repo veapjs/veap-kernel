@@ -243,4 +243,55 @@ describe("EventBus", () => {
 
     expect(handler).not.toHaveBeenCalled();
   });
+  it("subscribe returns an unsubscribe cleanup function", async () => {
+    const handler = vi.fn();
+    const unsubscribe = bus.subscribe(
+      "system:auth:login",
+      "sub-cleanup",
+      handler,
+    );
+
+    await bus.publish("system:auth:login", {
+      session: null,
+      user: null,
+    } as never);
+    expect(handler).toHaveBeenCalledTimes(1);
+
+    unsubscribe();
+
+    await bus.publish("system:auth:login", {
+      session: null,
+      user: null,
+    } as never);
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  it("once invokes handler exactly once and automatically unsubscribes", async () => {
+    const handler = vi.fn();
+    bus.once("system:auth:login", handler);
+
+    await bus.publish("system:auth:login", {
+      session: null,
+      user: null,
+    } as never);
+    await bus.publish("system:auth:login", {
+      session: null,
+      user: null,
+    } as never);
+
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  it("once returns an unsubscribe cleanup function that can cancel prior to trigger", async () => {
+    const handler = vi.fn();
+    const cancel = bus.once("system:auth:login", handler);
+
+    cancel();
+
+    await bus.publish("system:auth:login", {
+      session: null,
+      user: null,
+    } as never);
+    expect(handler).not.toHaveBeenCalled();
+  });
 });

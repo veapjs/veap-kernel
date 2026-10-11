@@ -193,4 +193,15 @@ describe("Container", () => {
     await expect(app().make(TOKEN)).resolves.toBe("resolved");
     await expect(app(TOKEN)).resolves.toBe("resolved");
   });
+  it("reset() removes both cached instances and registered provider definitions", async () => {
+    const container = new Container();
+    const TOKEN = Symbol.for("test:reset");
+    container.register({ token: TOKEN, useValue: "value" });
+
+    expect(container.has(TOKEN)).toBe(true);
+
+    container.reset();
+
+    expect(container.has(TOKEN)).toBe(false);
+  });
 });

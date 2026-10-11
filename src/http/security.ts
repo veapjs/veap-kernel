@@ -22,12 +22,13 @@ export function verifySameOrigin(request: Request | RequestLike): boolean {
 
   // 2. Origin / Host validation
   const origin = request.headers.get("origin");
-  const host =
+  const rawHost =
     request.headers.get("x-forwarded-host") || request.headers.get("host");
 
-  if (origin && host) {
+  if (origin && rawHost) {
     try {
-      const originHost = new URL(origin).host;
+      const originHost = new URL(origin).host.toLowerCase();
+      const host = (rawHost.split(",")[0] || "").trim().toLowerCase();
       return originHost === host;
     } catch {
       return false;

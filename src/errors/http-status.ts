@@ -1,4 +1,4 @@
-import type { ErrorCode } from "./types";
+import type { ErrorCode } from "./types.js";
 
 /**
  * Maps a domain error code to an HTTP status code.

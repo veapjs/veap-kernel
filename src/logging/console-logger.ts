@@ -1,5 +1,5 @@
-import { Injectable } from "../ioc/decorators";
-import type { ILogger } from "./logger";
+import { Injectable } from "../ioc/decorators.js";
+import type { ILogger } from "./logger.js";
 
 const colors = [
   "\x1b[32m", // Green

@@ -1,4 +1,4 @@
-import type { Container } from "./container";
+import type { Container } from "./container.js";
 
 /**
  * Base class for all Service Providers in Veap.
@@ -19,4 +19,10 @@ export abstract class ServiceProvider {
    * You can safely resolve other services here.
    */
   boot?(): void | Promise<void>;
+
+  /**
+   * Teardown the service and release persistent resources (e.g. database pools, intervals, sockets).
+   * Called during application shutdown or test teardown.
+   */
+  shutdown?(): void | Promise<void>;
 }

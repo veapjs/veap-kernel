@@ -1,17 +1,18 @@
-import { Injectable } from "../ioc/decorators";
-import type { ILogger } from "../logging/logger";
+import { Injectable } from "../ioc/decorators.js";
+import type { ILogger } from "../logging/logger.js";
 import type {
   EventHandler,
   IEventBus,
   PublishOptions,
   SystemEvent,
   SystemEventsMap,
-} from "./contracts";
+} from "./contracts.js";
 
 @Injectable()
 export class EventBus implements IEventBus {
   private handlers: Map<string, Map<string, EventHandler>> = new Map();
   private _logger: ILogger | null = null;
+  private _nextOnceId = 0;
 
   public setLogger(logger: ILogger): void {
     this._logger = logger;
@@ -32,7 +33,7 @@ export class EventBus implements IEventBus {
     eventType: K | (string & {}),
     subscriberId: string,
     handler: EventHandler<SystemEventsMap[K]>,
-  ): void {
+  ): () => void {
     const type = eventType as string;
     if (!this.handlers.has(type)) {
       this.handlers.set(type, new Map());
@@ -40,7 +41,7 @@ export class EventBus implements IEventBus {
     const eventHandlers = this.handlers.get(type);
 
     if (eventHandlers?.has(subscriberId)) {
-      return;
+      return () => this.unsubscribe(type, subscriberId);
     }
 
     eventHandlers?.set(subscriberId, handler as EventHandler);
@@ -48,6 +49,8 @@ export class EventBus implements IEventBus {
       "veap:event",
       `Subscriber "${subscriberId}" added for "${String(eventType)}"`,
     );
+
+    return () => this.unsubscribe(type, subscriberId);
   }
 
   public unsubscribe(eventType: string, subscriberId: string): void {
@@ -59,6 +62,25 @@ export class EventBus implements IEventBus {
         `Subscriber "${subscriberId}" removed from "${eventType}"`,
       );
     }
+  }
+
+  public once<K extends keyof SystemEventsMap>(
+    eventType: K | (string & {}),
+    handler: EventHandler<SystemEventsMap[K]>,
+    subscriberIdPrefix = "once",
+  ): () => void {
+    const subscriberId = `${subscriberIdPrefix}:${Date.now()}:${++this._nextOnceId}`;
+    let unsubscribed = false;
+
+    const wrappedHandler: EventHandler<SystemEventsMap[K]> = async (event) => {
+      if (!unsubscribed) {
+        unsubscribed = true;
+        this.unsubscribe(eventType as string, subscriberId);
+      }
+      return handler(event);
+    };
+
+    return this.subscribe(eventType, subscriberId, wrappedHandler);
   }
 
   public clearAll(): void {

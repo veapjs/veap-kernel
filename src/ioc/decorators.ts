@@ -1,5 +1,5 @@
 import "reflect-metadata";
-import type { Token } from "./tokens";
+import type { Token } from "./tokens.js";
 
 export function Injectable(): ClassDecorator {
   return (_target: any) => {};

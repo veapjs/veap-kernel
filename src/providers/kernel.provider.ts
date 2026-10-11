@@ -1,15 +1,15 @@
-import { CACHE_PROVIDER, MemoryCacheProvider } from "../cache";
-import { CONFIG_SERVICE, ConfigService, VEAP_CONFIG } from "../config";
-import { VeapConfigProvider } from "../config/veap-config.provider";
-import { EVENT_BUS, EventBus, eventBus } from "../events";
+import { CACHE_PROVIDER, MemoryCacheProvider } from "../cache/index.js";
+import { CONFIG_SERVICE, ConfigService, VEAP_CONFIG } from "../config/index.js";
+import { VeapConfigProvider } from "../config/veap-config.provider.js";
+import { EVENT_BUS, EventBus, eventBus } from "../events/index.js";
 import {
   COOKIE_STORE,
   MemoryCookieStore,
   MemoryRequestContext,
   REQUEST_CONTEXT,
-} from "../http";
-import { ServiceProvider } from "../ioc/service-provider";
-import { ConsoleLogger, LOGGER, logger } from "../logging";
+} from "../http/index.js";
+import { ServiceProvider } from "../ioc/service-provider.js";
+import { ConsoleLogger, LOGGER, logger } from "../logging/index.js";
 
 export class KernelServiceProvider extends ServiceProvider {
   register(): void {

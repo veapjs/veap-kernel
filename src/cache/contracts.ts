@@ -1,4 +1,4 @@
-import type { Token } from "../ioc/tokens";
+import type { Token } from "../ioc/tokens.js";
 
 export interface ICacheProvider {
   get<T>(key: string): Promise<T | null>;

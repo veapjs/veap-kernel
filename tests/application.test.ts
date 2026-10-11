@@ -184,4 +184,60 @@ describe("Application.bootstrap error handling", () => {
     await expect(app.bootstrap()).resolves.toBeUndefined();
     expect(g.__VEAP_BOOTSTRAPPED__).toBe(true);
   });
+  it("deduplicates providers if specified multiple times", async () => {
+    let registerCount = 0;
+    let bootCount = 0;
+
+    class DeduplicatedProvider extends ServiceProvider {
+      register(): void {
+        registerCount++;
+      }
+      async boot(): Promise<void> {
+        bootCount++;
+      }
+    }
+
+    const app = Application.configure()
+      .withProviders([DeduplicatedProvider, DeduplicatedProvider])
+      .create();
+
+    await app.bootstrap();
+
+    expect(registerCount).toBe(1);
+    expect(bootCount).toBe(1);
+
+    await app.shutdown();
+  });
+
+  it("shutdown calls provider shutdown in reverse order and resets state", async () => {
+    const shutdownOrder: string[] = [];
+
+    class FirstProvider extends ServiceProvider {
+      register(): void {}
+      async shutdown(): Promise<void> {
+        shutdownOrder.push("first");
+      }
+    }
+
+    class SecondProvider extends ServiceProvider {
+      register(): void {}
+      async shutdown(): Promise<void> {
+        shutdownOrder.push("second");
+      }
+    }
+
+    const app = Application.configure()
+      .withProviders([FirstProvider, SecondProvider])
+      .create();
+
+    await app.bootstrap();
+    const g = globalThis as any;
+    expect(g.__VEAP_BOOTSTRAPPED__).toBe(true);
+
+    await app.shutdown();
+
+    expect(shutdownOrder).toEqual(["second", "first"]);
+    expect(g.__VEAP_BOOTSTRAPPED__).toBeUndefined();
+    expect(g.__VEAP_ACTIVE_PROVIDERS__).toEqual([]);
+  });
 });

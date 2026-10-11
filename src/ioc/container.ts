@@ -1,6 +1,6 @@
 import "reflect-metadata";
-import { AppError } from "../errors/app-error";
-import type { Token } from "./tokens";
+import { AppError } from "../errors/app-error.js";
+import type { Token } from "./tokens.js";
 
 export type { Token };
 
@@ -156,6 +156,12 @@ export class Container {
   }
 
   clear(): void {
+    this.instances.clear();
+    this.inFlight.clear();
+  }
+
+  reset(): void {
+    this.providers.clear();
     this.instances.clear();
     this.inFlight.clear();
   }
