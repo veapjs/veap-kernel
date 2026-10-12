@@ -6,6 +6,8 @@ import {
   COOKIE_STORE,
   MemoryCookieStore,
   MemoryRequestContext,
+  NextCookieStore,
+  NextRequestContext,
   REQUEST_CONTEXT,
 } from "../http/index.js";
 import { ServiceProvider } from "../ioc/service-provider.js";
@@ -29,7 +31,7 @@ export class KernelServiceProvider extends ServiceProvider {
 
     this.container.register({
       token: ConsoleLogger,
-      useValue: logger,
+      useClass: ConsoleLogger,
       singleton: true,
     });
 
@@ -64,11 +66,11 @@ export class KernelServiceProvider extends ServiceProvider {
       singleton: true,
     });
 
-    // Default transport fallbacks (overridden when Next.js transport provider is loaded)
+    // ICookieStore / IHttpRequestContext ports → Next.js transport adapters
     if (!this.container.has(COOKIE_STORE)) {
       this.container.register({
         token: COOKIE_STORE,
-        useClass: MemoryCookieStore,
+        useClass: NextCookieStore,
         singleton: true,
       });
     }
@@ -76,7 +78,7 @@ export class KernelServiceProvider extends ServiceProvider {
     if (!this.container.has(REQUEST_CONTEXT)) {
       this.container.register({
         token: REQUEST_CONTEXT,
-        useClass: MemoryRequestContext,
+        useClass: NextRequestContext,
         singleton: true,
       });
     }
@@ -98,7 +100,7 @@ export class KernelServiceProvider extends ServiceProvider {
         }
       }
     } catch (_e) {
-      // Gracefully continue if environment is client or config load fails
+      // Configuration fallback
     }
 
     logger.debug(

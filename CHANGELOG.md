@@ -1,5 +1,11 @@
 # @veap/kernel
 
+## 0.1.2
+
+### Patch Changes
+
+- Add `NextCookieStore` and `NextRequestContext` transport adapters and bind them by default in `KernelServiceProvider`.
+
 ## 0.1.1
 
 ### Patch Changes
