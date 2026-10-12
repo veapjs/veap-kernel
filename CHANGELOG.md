@@ -1,5 +1,15 @@
 # @veap/kernel
 
+## 0.1.3
+
+### Patch Changes
+
+- Add Waku.js and Web Standards HTTP adapters for `COOKIE_STORE` and `REQUEST_CONTEXT` ports:
+  - `WakuRequestContext`: reads headers from `Request` (or ambient `AsyncLocalStorage`) and throws `WakuRedirect` on redirection.
+  - `WakuCookieStore`: reads and parses cookies from `Request` headers and appends `Set-Cookie` headers to response headers.
+  - `runWithWakuRequest`: wraps execution in an ambient `AsyncLocalStorage` request store.
+  - `registerWakuHttp`: convenience helper to bind Waku adapters into the IoC container.
+
 ## 0.1.2
 
 ### Patch Changes
