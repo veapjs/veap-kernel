@@ -1,6 +1,6 @@
 {
   "name": "@veap/kernel",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Core dependency injection container, event bus, and application lifecycle for Veap",
   "bugs": "https://github.com/veapjs/veap-kernel/issues",
   "repository": {

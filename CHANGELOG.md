@@ -1,5 +1,11 @@
 # @veap/kernel
 
+## 0.1.5
+
+### Patch Changes
+
+- fix: update versions and dependencies
+
 ## 0.1.4
 
 ### Patch Changes
