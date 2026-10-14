@@ -1,4 +1,5 @@
 import { CACHE_PROVIDER, MemoryCacheProvider } from "../cache/index.js";
+import { COMMANDS, commands } from "../cli/registry.js";
 import { CONFIG_SERVICE, ConfigService, VEAP_CONFIG } from "../config/index.js";
 import { VeapConfigProvider } from "../config/veap-config.provider.js";
 import { EVENT_BUS, EventBus, eventBus } from "../events/index.js";
@@ -28,6 +29,14 @@ export class KernelServiceProvider extends ServiceProvider {
     });
 
     eventBus.setLogger(logger);
+
+    // Console command registry: providers may either declare `commands()` or
+    // resolve this token and register dynamically.
+    this.container.register({
+      token: COMMANDS,
+      useValue: commands,
+      singleton: true,
+    });
 
     this.container.register({
       token: ConsoleLogger,

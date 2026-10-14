@@ -1,3 +1,4 @@
+import type { CommandEntry } from "../cli/command.js";
 import type { Container } from "./container.js";
 
 /**
@@ -19,6 +20,28 @@ export abstract class ServiceProvider {
    * You can safely resolve other services here.
    */
   boot?(): void | Promise<void>;
+
+  /**
+   * Console commands contributed by this provider.
+   *
+   * Collected by `Application.bootstrap()` into the global command registry, so
+   * a package registers its commands once and both the web and the console
+   * surfaces see them:
+   *
+   * ```ts
+   * class DatabaseServiceProvider extends ServiceProvider {
+   *   commands() {
+   *     return [MakeModelCommand, MigrateCommand];
+   *   }
+   * }
+   * ```
+   *
+   * Must stay side-effect free: it is called during bootstrap, after every
+   * provider has registered and before any provider boots. Providers that need
+   * to decide dynamically (based on config, enabled features, …) can register
+   * into `commands` from `boot()` instead.
+   */
+  commands?(): CommandEntry[] | Promise<CommandEntry[]>;
 
   /**
    * Teardown the service and release persistent resources (e.g. database pools, intervals, sockets).

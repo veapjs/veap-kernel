@@ -1,5 +1,16 @@
 # @veap/kernel
 
+## 0.1.4
+
+### Patch Changes
+
+- Add the `veap` console (`@veap/kernel/cli` plus a `veap` binary) whose command list is composed from the application's service providers.
+  
+  - `ServiceProvider.commands?()` declarations are collected by `Application.bootstrap()` into the process-global `CommandRegistry` (also bound as the `COMMANDS` token), and `Application.providers()` exposes the configured provider list without mutating it.
+  - Commands use Laravel-style signatures (`make:model {name} {--m|migration}`) parsed by `parseSignature()` / `matchArgs()`, and render through an `Output` port.
+  - `list` and `help` ship as built-ins, alongside `--version`, `--verbose`, `--quiet`, `--no-ansi`, `--cwd` and `--env`.
+  - `ConsoleApplication` / `runConsole()` resolve the project root, load `.env` files, install memory cookie/header adapters so no command needs a request scope, set `VEAP_CLI=1`, run exactly one command and always shut the application down — including on `SIGINT`.
+
 ## 0.1.3
 
 ### Patch Changes

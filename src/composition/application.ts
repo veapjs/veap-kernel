@@ -1,3 +1,4 @@
+import { commands as commandRegistry } from "../cli/registry.js";
 import { eventBus } from "../events/event-bus.js";
 import { container } from "../ioc/container.js";
 import { ServiceProvider } from "../ioc/service-provider.js";
@@ -9,6 +10,17 @@ export type ProviderEntry =
     ) => ServiceProvider)
   | ((c: typeof container) => ServiceProvider)
   | ServiceProvider;
+
+async function collectProviderCommands(
+  providers: ServiceProvider[],
+): Promise<void> {
+  for (const provider of providers) {
+    if (!provider.commands) continue;
+
+    const declared = await provider.commands();
+    if (declared.length > 0) commandRegistry.register(declared);
+  }
+}
 
 export class ApplicationBuilder {
   protected customProviders: ProviderEntry[] = [];
@@ -43,6 +55,16 @@ export class Application {
 
   public static configure(): ApplicationBuilder {
     return new ApplicationBuilder();
+  }
+
+  /**
+   * The providers this application was configured with.
+   *
+   * Read-only copy: a console needs to inspect the composition root of an
+   * existing application without mutating it.
+   */
+  public providers(): ProviderEntry[] {
+    return [...this.providerEntries];
   }
 
   public async bootstrap(): Promise<void> {
@@ -110,6 +132,11 @@ export class Application {
         for (const provider of providers) {
           await provider.register();
         }
+
+        // Commands declared by providers are collected between the register and
+        // boot passes: declarations run first, so a provider that registers
+        // dynamically from `boot()` can still override them.
+        await collectProviderCommands(providers);
 
         for (const provider of providers) {
           if (provider.boot) {
