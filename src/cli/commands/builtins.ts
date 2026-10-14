@@ -2,6 +2,9 @@ import type { CommandEntry, CommandInput } from "../command.js";
 import { Command } from "../command.js";
 import { renderCommandHelp, renderCommandList } from "../help.js";
 import type { Output } from "../output.js";
+import { AboutCommand } from "./about.js";
+import { ConfigShowCommand } from "./config-show.js";
+import { MakeCommandCommand } from "./make-command.js";
 
 /** `veap list` — every command registered in this process. */
 export class ListCommand extends Command {
@@ -48,5 +51,11 @@ export class HelpCommand extends Command {
 
 /** Built-ins are registered before providers, so a provider can override them. */
 export function createBuiltinCommands(): CommandEntry[] {
-  return [ListCommand, HelpCommand];
+  return [
+    ListCommand,
+    HelpCommand,
+    AboutCommand,
+    ConfigShowCommand,
+    MakeCommandCommand,
+  ];
 }

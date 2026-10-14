@@ -1,5 +1,15 @@
 # @veap/kernel
 
+## 0.1.6
+
+### Patch Changes
+
+- Add the `about`, `config:show` and `make:command` built-in console commands.
+  
+  - `about` summarizes the kernel version, environment, project root, Node version and the number of configured providers and commands.
+  - `config:show {key?}` prints the resolved `ConfigService` configuration, or a single `KEY=value` line (exit `1` for an unknown key).
+  - `make:command {name} {--dir=path}` scaffolds a `Command` subclass into the project through the console-free `generateCommand()` helper, deriving the class name from the last namespace segment and refusing to overwrite an existing file.
+
 ## 0.1.5
 
 ### Patch Changes
