@@ -25,9 +25,9 @@ utilities, and application builder abstractions.
   and concurrency-safe bootstrap deduplication.
 - **Typed event bus**: High-performance asynchronous pub/sub event bus with
   wildcard matching (`user:*`) and subscription lifecycle management.
-- **Result type & error handling**: Unified `Result<T, E>`, `AppError` taxonomy
+- **Result type & error handling**: Unified `Result<T>`, `AppError` taxonomy
   (NotFound, Unauthorized, Forbidden, Validation, Conflict), and server-action
-  error formatters (`ok`, `err`, `handleActionError`).
+  error formatters (`ok`, `handleActionError`).
 - **Standard service contracts**: Abstract port tokens for cookies, HTTP
   request context, caching, logging, and database connections.
 
@@ -121,9 +121,13 @@ Publish and subscribe to typed asynchronous events:
 import { eventBus } from "@veap/kernel";
 
 // Subscribe to a specific topic
-const unsubscribe = eventBus.subscribe("user:registered", async (payload) => {
-  console.log("New user registered:", payload);
-});
+const unsubscribe = eventBus.subscribe(
+  "user:registered",
+  "welcome-listener",
+  async (envelope) => {
+    console.log("New user registered:", envelope.payload);
+  },
+);
 
 // Publish an event
 await eventBus.publish("user:registered", {
@@ -140,7 +144,12 @@ unsubscribe();
 Safely wrap server actions or service boundaries with standardized results:
 
 ```ts
-import { ok, err, handleActionError, type Result } from "@veap/kernel";
+import {
+  ok,
+  AppError,
+  handleActionError,
+  type Result,
+} from "@veap/kernel";
 
 export async function calculateRatio(
   a: number,
@@ -148,7 +157,7 @@ export async function calculateRatio(
 ): Promise<Result<number>> {
   try {
     if (b === 0) {
-      return err("Division by zero is not allowed");
+      throw AppError.BadRequest("Division by zero is not allowed");
     }
     return ok(a / b);
   } catch (error) {
@@ -159,10 +168,18 @@ export async function calculateRatio(
 
 ## Subpath Exports
 
-| Export Path           | Content                                                          |
-| --------------------- | ---------------------------------------------------------------- |
-| `@veap/kernel`        | All core IoC, Application, events, config, cache, and error APIs |
-| `@veap/kernel/server` | Server-specific entry points and CLI infrastructure              |
+| Export Path            | Content                                                          |
+| ---------------------- | ---------------------------------------------------------------- |
+| `@veap/kernel`         | All core IoC, Application, events, config, cache, and error APIs |
+| `@veap/kernel/server`  | Server-specific entry points and CLI infrastructure              |
+| `@veap/kernel/ioc`     | IoC container, `ServiceProvider`, and injection decorators       |
+| `@veap/kernel/events`  | Event bus and event envelope types                               |
+| `@veap/kernel/errors`  | `AppError`, `Result`, `ok`, and `handleActionError`              |
+| `@veap/kernel/logging` | Logger contracts and console logger implementation               |
+| `@veap/kernel/http`    | HTTP context, cookies, and redirect contracts                    |
+| `@veap/kernel/cache`   | Cache service contracts and memory cache implementation          |
+| `@veap/kernel/config`  | Configuration service and environment helpers                    |
+| `@veap/kernel/cli`     | Console application, command runner, and output formatters       |
 
 ## Documentation
 
