@@ -1,5 +1,11 @@
 # @veap/kernel
 
+## 0.2.0
+
+### Minor Changes
+
+- Remove official Waku.js HTTP adapters (`WakuCookieStore`, `WakuRequestContext`, `WakuRedirect`, `runWithWakuRequest`, `registerWakuHttp`). Custom frameworks can continue implementing `ICookieStore` and `IHttpRequestContext` ports in application or custom provider code.
+
 ## 0.1.6
 
 ### Patch Changes
