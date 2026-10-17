@@ -39,6 +39,7 @@ export class Container {
    * Check if a token is registered.
    */
   has(token: Token<any>): boolean {
+    if (token === Container) return true;
     return (
       this.providers.has(this.getTokenKey(token)) ||
       this.instances.has(this.getTokenKey(token))
@@ -49,6 +50,9 @@ export class Container {
    * Resolve an instance for the given token.
    */
   async resolve<T>(token: Token<T>): Promise<T> {
+    if ((token as unknown) === Container) {
+      return this as unknown as T;
+    }
     const key = this.getTokenKey(token);
     if (this.instances.has(key)) {
       return this.instances.get(key);
@@ -153,6 +157,78 @@ export class Container {
 
   async make<T>(token: Token<T>): Promise<T> {
     return this.resolve<T>(token);
+  }
+
+  /**
+   * Invoke a method on a target object or class instance, automatically
+   * resolving any parameters decorated with `@Inject(token)` (or emitted
+   * `design:paramtypes` class tokens) from this container.
+   *
+   * Any non-injected parameters are filled sequentially from `extraArgs`.
+   */
+  async call<T = any>(
+    target: any,
+    methodKey: string | symbol,
+    ...extraArgs: any[]
+  ): Promise<T> {
+    const fn = target?.[methodKey];
+    if (typeof fn !== "function") {
+      return undefined as unknown as T;
+    }
+
+    const customTokens: Map<number, Token<any>> | undefined =
+      Reflect.getMetadata("ioc:inject_params", target, methodKey);
+    const paramTypes: any[] | undefined = Reflect.getMetadata(
+      "design:paramtypes",
+      target,
+      methodKey,
+    );
+
+    if (
+      (!customTokens || customTokens.size === 0) &&
+      (!paramTypes || paramTypes.length === 0)
+    ) {
+      return await fn.apply(target, extraArgs);
+    }
+
+    const maxCustomIndex =
+      customTokens && customTokens.size > 0
+        ? Math.max(...customTokens.keys()) + 1
+        : 0;
+    const totalParams = Math.max(paramTypes?.length ?? 0, maxCustomIndex);
+
+    const remainingExtras = [...extraArgs];
+    const resolvedArgs: any[] = [];
+
+    const isPrimitiveOrGeneric = (type: any): boolean =>
+      !type ||
+      type === Object ||
+      type === Function ||
+      type === String ||
+      type === Number ||
+      type === Boolean ||
+      type === Array ||
+      type === Symbol ||
+      type === Promise;
+
+    for (let i = 0; i < totalParams; i++) {
+      if (customTokens?.has(i)) {
+        const token = customTokens.get(i)!;
+        resolvedArgs.push(await this.resolve(token));
+      } else if (paramTypes?.[i] && !isPrimitiveOrGeneric(paramTypes[i])) {
+        resolvedArgs.push(await this.resolve(paramTypes[i]));
+      } else if (remainingExtras.length > 0) {
+        resolvedArgs.push(remainingExtras.shift());
+      } else {
+        resolvedArgs.push(undefined);
+      }
+    }
+
+    if (remainingExtras.length > 0) {
+      resolvedArgs.push(...remainingExtras);
+    }
+
+    return await fn.apply(target, resolvedArgs);
   }
 
   clear(): void {

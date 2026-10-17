@@ -8,9 +8,25 @@ export function Injectable(): ClassDecorator {
 export function Inject(token: Token<any>): ParameterDecorator {
   return (
     target: any,
-    _propertyKey: string | symbol | undefined,
+    propertyKey: string | symbol | undefined,
     parameterIndex: number,
   ) => {
+    if (propertyKey !== undefined) {
+      const customTokens: Map<number, Token<any>> = Reflect.getMetadata(
+        "ioc:inject_params",
+        target,
+        propertyKey,
+      ) || new Map();
+      customTokens.set(parameterIndex, token);
+      Reflect.defineMetadata(
+        "ioc:inject_params",
+        customTokens,
+        target,
+        propertyKey,
+      );
+      return;
+    }
+
     const customTokens: Map<number, Token<any>> = Reflect.getMetadata(
       "ioc:inject_params",
       target,

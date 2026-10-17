@@ -204,4 +204,31 @@ describe("Container", () => {
 
     expect(container.has(TOKEN)).toBe(false);
   });
+
+  it("call() resolves @Inject method parameters and appends extra arguments", async () => {
+    const container = new Container();
+
+    class AuthService {
+      name = "auth-service";
+    }
+
+    container.register({
+      token: AuthService,
+      useClass: AuthService,
+      singleton: true,
+    });
+
+    class SamplePlugin {
+      async init(
+        @Inject(AuthService) auth: AuthService,
+        context?: { actor: string },
+      ) {
+        return `${auth.name}:${context?.actor ?? "anonymous"}`;
+      }
+    }
+
+    const plugin = new SamplePlugin();
+    const result = await container.call(plugin, "init", { actor: "admin" });
+    expect(result).toBe("auth-service:admin");
+  });
 });
